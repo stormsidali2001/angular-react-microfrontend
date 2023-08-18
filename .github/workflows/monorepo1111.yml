@@ -11,8 +11,8 @@ jobs:
     strategy:
       matrix:
         workspaces:
-          - ./src/client/todo-details
-          - ./src/client/todolist
+          - ./[object Object]
+          - ./[object Object]
 
     continue-on-error: true
 
