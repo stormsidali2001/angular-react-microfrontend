@@ -11,8 +11,8 @@ jobs:
     strategy:
       matrix:
         workspaces:
-          - ./src/client/todolist
           - ./src/client/todo-details
+          - ./src/client/todolist
 
     continue-on-error: true
 
@@ -97,19 +97,14 @@ jobs:
 
             preScan().catch(console.log);
 
-       - name: scan
+      - name: scan
         id: componly-scan
         run: |
           ls -a 
           cd  ${{ matrix.workspaces }}   
           npx componly scan  --design-token-globs **/*.* --design-systems-path   ./.componly/ds.json --config-path ./   --project  ./
       
-      - name: scan
-            id: componly-scan
-            run: |
-              ls -a 
-              cd  ${{ matrix.workspaces }}   
-              npx componly scan  --design-token-globs **/*.* --design-systems-path   ./.componly/ds.json --config-path ./   --project  ./
+ 
 
       - name: Post scan.json
         id: post-scan
