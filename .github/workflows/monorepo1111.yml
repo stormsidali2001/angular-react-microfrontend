@@ -101,7 +101,7 @@ jobs:
         run: |
           ls -a 
           cd  ${{ matrix.workspaces }}   
-          npx componly scan  --design-token-globs **/*.* --design-systems-path   ./.componly/ds.json --config-path ./   --project  ./
+          npx componly scan  --design-token-globs * --design-systems-path   ./.componly/ds.json --config-path ./   --project  ./
       
  
 
