@@ -1,4 +1,4 @@
-name: Monorepo111
+name: Componly project microfrontend test
 
 on:
   push:
@@ -11,8 +11,8 @@ jobs:
     strategy:
       matrix:
         workspaces:
-          - ./[object Object]
-          - ./[object Object]
+          - ./src/client/todolist
+          - ./src/client/todo-details
 
     continue-on-error: true
 
@@ -34,11 +34,11 @@ jobs:
               pwd
               pushd ${{ matrix.workspaces }}
               echo "workspace : -----> ${{ matrix.workspaces}}"
-              yarn install && yarn add @componly/core  @componly/schemas  @componly/cli axios form-data -D 
+              yarn install && yarn add @componly/core  @componly/schemas  @componly/cli axios  -D 
               popd
           else
               echo "No workspaces to install. Running 'yarn install' in the root directory."
-              yarn install && yarn add @componly/core  @componly/schemas  @componly/cli axios form-data -D 
+              yarn install && yarn add @componly/core  @componly/schemas  @componly/cli axios  -D 
           fi
     
      
