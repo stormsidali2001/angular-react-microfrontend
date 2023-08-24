@@ -1,4 +1,5 @@
-name: Componly project microfrontend test
+
+name: Componly project sdasdaasd
 
 on:
   push:
@@ -12,6 +13,7 @@ jobs:
       matrix:
         workspaces:
           - ./src/client/todo-details
+          - ./src/client/todolist
 
     continue-on-error: true
 
@@ -33,14 +35,12 @@ jobs:
               pwd
               pushd ${{ matrix.workspaces }}
               echo "workspace : -----> ${{ matrix.workspaces}}"
-              yarn install && yarn add @componly/core  @componly/schemas  @componly/cli axios  -D 
+              yarn install --prefer-offline && yarn add @componly/core  @componly/schemas  @componly/cli axios form-data  -D --prefer-offline
               popd
           else
               echo "No workspaces to install. Running 'yarn install' in the root directory."
-              yarn install && yarn add @componly/core  @componly/schemas  @componly/cli axios  -D 
+              yarn install --prefer-offline && yarn add @componly/core  @componly/schemas  @componly/cli axios form-data  -D --prefer-offline
           fi
-    
-     
           echo -e "\n@componly:registry=https://npm.pkg.github.com/" >> .npmrc
           echo //npm.pkg.github.com/:_authToken=${{ secrets.COMPONLY_NPM_AUTH_TOKEN }} >> .npmrc
           if [[ "${{ matrix.workspaces}}" != "empty" ]]; then
@@ -52,110 +52,20 @@ jobs:
               echo "No workspaces to install. Running 'yarn install' in the root directory."
               yarn install && yarn add @componly/core  @componly/schemas  @componly/cli axios -D 
           fi
-
-   
-      - name: Pre scan.json
-        id: pre-scan
-        uses: actions/github-script@v6.4.1
-        with:
-          script: |
-            process.chdir("${{ matrix.workspaces}}")
-            const { writeFileSync ,mkdirSync,existsSync} = require("fs");
-            const axios = require("axios");
-
-            const instance = axios.create({
-              baseURL: "https://df82-154-246-237-254.ngrok-free.app",
-              headers: {
-                "Content-Type": "application/json",
-              },
-            });
-
-            async function preScan() {
-              const projectLoginResponse = await instance.post("/auth/login/cli", {
-                cliId: "${{secrets.COMPONLY_API_KEY}}",
-                password: "${{secrets.COMPONLY_API_SECRET}}",
-              });
-
-              const token = projectLoginResponse.data.token;
-
-              const response = await instance.get(
-                '/companies/cli/design-systems/all',
-                {
-                  headers: {
-                    Authorization: `Bearer ${token}`
-                  },
-                }
-              );
-              if(!existsSync(".componly")){
-                mkdirSync(".componly")
-              }
-              writeFileSync(".componly/ds.json", JSON.stringify(response.data, undefined, 2))
-
-              console.log(response.status);
-            }
-
-            preScan().catch(console.log);
-
+    
       - name: scan
         id: componly-scan
+        env:
+          COMMIT_NAME: ${{ github.event.head_commit.message }}
+          RUN_ID: ${{ github.run_id }}
+          COMMIT_HASH: ${{ github.sha }}
+          STEP_OUTCOME: ${{ steps.componly-scan.outcome }}
+          JOB_NAME: ${{ github.job }}
+          REPO_NAME: ${{ github.repository }}
+          WORKFLOW_NAME: ${{ github.workflow }}
+          COMPONLY_BACKEND_URL: https://f678-154-246-96-234.ngrok-free.app
         run: |
           ls -a 
           cd  ${{ matrix.workspaces }}   
-          npx componly scan  --design-token-globs * --design-systems-path   ./.componly/ds.json --config-path ./   --project  ./
-      
- 
+          npx componly scan -cliid=${{secrets.COMPONLY_API_KEY}} -clipwd="${{secrets.COMPONLY_API_SECRET}}" --config-path ./   --project  ./
 
-      - name: Post scan.json
-        id: post-scan
-        env:
-          COMMIT_NAME: ${{ github.event.head_commit.message }}
-          COMMIT_HASH: ${{ github.sha }}
-        uses: actions/github-script@v6.4.1
-        with:
-          script: |
-            process.chdir("${{ matrix.workspaces}}")
-            const commitName = process.env.COMMIT_NAME;
-            const commitHash = process.env.COMMIT_HASH;
-            console.log("commit name",commitName);
-            console.log("commmit hash",commitHash)
-            const workspaces = "${{ matrix.workspaces }}";
-            console.log("workspaces------------>",workspaces); 
-            const FormData = require("form-data");
-            const { createReadStream, readFileSync } = require("fs");
-            const axios = require("axios");
-
-            const instance = axios.create({
-              baseURL: "https://df82-154-246-237-254.ngrok-free.app",
-              headers: {
-                "Content-Type": "application/json",
-              },
-            });
-
-            async function postScan() {
-              const serializedConfig = readFileSync("./componly.config.json");
-              const { codebaseID } = JSON.parse(serializedConfig);
-              const projectLoginResponse = await instance.post("/auth/login/cli", {
-                cliId: "${{secrets.COMPONLY_API_KEY}}",
-                password: "${{secrets.COMPONLY_API_SECRET}}",
-              });
-
-              const token = projectLoginResponse.data.token;
-              const formData = new FormData();
-              const fileStream = createReadStream("./.componly/scan.json");
-              formData.append("file", fileStream);
-
-              const response = await instance.post(
-                `/scans/upload/${codebaseID}?commitMessage=${commitName}&commitHash=${commitHash}`,
-                formData,
-                {
-                  headers: {
-                    Authorization: `Bearer ${token}`,
-                    ...formData.getHeaders(),
-                  },
-                }
-              );
-
-              console.log(response.status);
-            }
-
-            postScan().catch(console.log);
