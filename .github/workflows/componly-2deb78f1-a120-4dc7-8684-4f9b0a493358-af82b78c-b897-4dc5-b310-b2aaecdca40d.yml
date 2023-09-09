@@ -17,8 +17,8 @@ jobs:
     strategy:
       matrix:
         workspaces:
-          - ./src/client/todolist
           - ./src/client/todo-details
+          - ./src/client/todolist
 
     continue-on-error: true
 
